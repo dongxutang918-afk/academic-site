@@ -1,0 +1,416 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  ChevronDown, ExternalLink, Github, Mail, MapPin, 
+  BookOpen, Cpu, Award, Zap, Code, Database,
+  GraduationCap, FileText, Activity, Layers, Download,
+  Radio
+} from 'lucide-react';
+
+// --- REAL CV DATA ---
+const NAV_LINKS = ['About', 'Research', 'Publications', 'Projects', 'Hardware', 'Honors'];
+
+const RESEARCH_FOCUS = [
+  { id: 1, title: 'Neuromorphic Decoding', desc: 'Translating skin mechanosensation into lower-limb kinematics using SNNs and TouchSim.', icon: <Zap size={24}/>, span: 'md:col-span-2', bg: 'bg-gradient-to-br from-blue-500/10 to-transparent' },
+  { id: 2, title: 'Haptic & Tactile Interfaces', desc: 'Designing biomimetic electro-tactile feedback based on neural coding and optical flow.', icon: <Activity size={24}/>, span: 'md:col-span-1', bg: 'bg-gradient-to-br from-purple-500/10 to-transparent' },
+  { id: 3, title: 'Wearable Sensing', desc: 'Capturing ground information via foot-wearable acoustic and vibration systems.', icon: <Radio size={24}/>, span: 'md:col-span-1', bg: 'bg-gradient-to-br from-cyan-500/10 to-transparent' },
+  { id: 4, title: 'Edge AI Systems', desc: 'Deploying multimodal recognition models on embedded systems like Raspberry Pi.', icon: <Cpu size={24}/>, span: 'md:col-span-2', bg: 'bg-gradient-to-br from-emerald-500/10 to-transparent' },
+];
+
+const PUBLICATIONS = [
+  { 
+    id: 1, 
+    title: 'Neuromorphic Decoding of Lower-Limb Kinematics from Skin Mechanosensation for Proprioceptive Compensation', 
+    authors: <><span className="text-white font-medium">Dongxu Tang</span>, J. Liao, & Y. Shao</>, 
+    venue: 'IEEE Transactions on Neural Systems and Rehabilitation Engineering (In Prep.)', 
+    year: '2026', type: 'Journal', highlight: true,
+    link: '#'
+  },
+  { 
+    id: 2, 
+    title: 'VibWalk: Mapping Lower-limb Haptic Experiences of Everyday Walking', 
+    authors: <>Shih-Ying-Lei, <span className="text-white font-medium">Dongxu Tang</span>, W. Hu, S. H. Yoon, & Y. Shao</>, 
+    venue: 'CHI 2025', 
+    year: '2025', type: 'Conference', highlight: true,
+    link: 'https://doi.org/10.1145/3706598.3714254'
+  },
+  { 
+    id: 3, 
+    title: 'Demo Abstract: A Foot-Wearable Acoustic Sensing System for Capturing Ground Information', 
+    authors: <><span className="text-white font-medium">Dongxu Tang*</span>, Shih-Ying-Lei*, & Y. Shao</>, 
+    venue: 'SenSys 2024', 
+    year: '2024', type: 'Conference', highlight: false,
+    link: 'https://doi.org/10.1145/3666025.3699387'
+  },
+];
+
+const PROJECTS = [
+  { 
+    id: 1, 
+    title: 'Lower-Limb Kinematics Decoding', 
+    desc: 'Implemented a TouchSim-SNN-LSTM-MDN decoder transforming multi-axis skin vibration into 48-channel neural spike trains, achieving 5.2° MAE for continuous knee and ankle joint kinematics.', 
+    tags: ['Python', 'PyTorch', 'TouchSim', 'SNN', 'NOKOV'], 
+    img: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=600&q=80' 
+  },
+  { 
+    id: 2, 
+    title: 'Biomimetic Electro-Tactile System', 
+    desc: 'Designed a biomimetic encoding pipeline for a 16-channel electrotactile array. Applied Lucas-Kanade optical flow to OCT skin scan data to extract displacement and generate realistic pressure feedback.', 
+    tags: ['Optical Flow', 'Tactile Encoding', 'Hardware Integration'], 
+    img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80' 
+  },
+  { 
+    id: 3, 
+    title: 'VibWalk Multimodal Model', 
+    desc: 'Built a 5.36 GB foot-ground vibration dataset from 31 participants. Deployed a ResNet-based model on a Raspberry Pi for online ground classification, achieving 96.1% within-user F1 score.', 
+    tags: ['Raspberry Pi 5', 'ResNet', 'Edge AI', 'Signal Processing'], 
+    img: 'https://images.unsplash.com/photo-1617802690992-15d93263d3cf?auto=format&fit=crop&w=600&q=80' 
+  }
+];
+
+const SKILLS = ['Python', 'C', 'R', 'PyTorch', 'Linux', 'TouchSim', 'Biometrics Ltd EMG', 'NOKOV Motion Capture', 'Raspberry Pi 5'];
+
+// --- ANIMATION VARIANTS ---
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+// --- COMPONENTS ---
+
+const AuroraBackground = () => (
+  <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#05070B]">
+    <motion.div 
+      animate={{ x: [0, 50, -50, 0], y: [0, -50, 50, 0], scale: [1, 1.1, 0.9, 1] }}
+      transition={{ duration: 15, repeat: Infinity, repeatType: 'reverse', ease: 'linear' }}
+      className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-violet-600/20 blur-[120px] mix-blend-screen"
+    />
+    <motion.div 
+      animate={{ x: [0, -80, 40, 0], y: [0, 60, -40, 0], scale: [1, 1.2, 0.8, 1] }}
+      transition={{ duration: 20, repeat: Infinity, repeatType: 'reverse', ease: 'linear' }}
+      className="absolute top-[30%] right-[-10%] w-[40vw] h-[60vw] rounded-full bg-cyan-600/15 blur-[120px] mix-blend-screen"
+    />
+    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+  </div>
+);
+
+const GlassCard = ({ children, className = '', hover = true, span = '' }) => (
+  <motion.div
+    whileHover={hover ? { y: -5, transition: { duration: 0.2 } } : {}}
+    className={`relative bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-3xl overflow-hidden ${hover ? 'hover:bg-white/[0.06] hover:border-white/[0.15] hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)]' : ''} transition-all duration-300 ${span} ${className}`}
+  >
+    <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none"></div>
+    {children}
+  </motion.div>
+);
+
+const SectionTitle = ({ title, subtitle }) => (
+  <motion.div variants={fadeInUp} className="mb-12">
+    <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60 mb-3 tracking-tight">
+      {title}
+    </h2>
+    {subtitle && <p className="text-white/50 text-lg">{subtitle}</p>}
+  </motion.div>
+);
+
+// --- MAIN APP ---
+export default function App() {
+  const [activeSection, setActiveSection] = useState('');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = NAV_LINKS.map(link => document.getElementById(link.toLowerCase()));
+      const scrollPos = window.scrollY + 200;
+      sections.forEach(section => {
+        if (section && section.offsetTop <= scrollPos && section.offsetTop + section.offsetHeight > scrollPos) {
+          setActiveSection(section.id);
+        }
+      });
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div className="min-h-screen text-[#F5F7FA] font-sans selection:bg-cyan-500/30">
+      <AuroraBackground />
+
+      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-6 px-4">
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 px-6 py-3 rounded-full flex gap-1 md:gap-6 shadow-2xl overflow-x-auto max-w-full hide-scrollbar">
+          {NAV_LINKS.map((link) => (
+            <a 
+              key={link} 
+              href={`#${link.toLowerCase()}`}
+              className={`text-sm md:text-base font-medium px-4 py-2 rounded-full transition-all duration-300 ${activeSection === link.toLowerCase() ? 'bg-white/10 text-white shadow-inner' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+            >
+              {link}
+            </a>
+          ))}
+        </div>
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-6 pt-32 pb-24 space-y-32">
+        
+        {/* HERO SECTION */}
+        <motion.section id="home" initial="hidden" animate="visible" variants={staggerContainer} className="min-h-[80vh] flex flex-col justify-center relative">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-8 space-y-8 z-10">
+              <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-sm font-medium">
+                <MapPin size={14}/>
+                Shenzhen, China
+              </motion.div>
+              
+              <motion.h1 variants={fadeInUp} className="text-6xl md:text-8xl font-extrabold tracking-tighter leading-[1.1]">
+                Dongxu <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400">Tang</span>
+              </motion.h1>
+              
+              <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-white/70 max-w-2xl leading-relaxed font-light">
+                Neuromorphic Decoding, Wearable Sensing, and Human-Machine Interaction based on Physiological Signals.
+              </motion.p>
+              
+              <motion.div variants={fadeInUp} className="flex flex-wrap gap-3">
+                {['M.S. Candidate at HIT Shenzhen', 'First Author', 'Sensory Feedback', 'Edge Computing'].map(tag => (
+                  <span key={tag} className="px-4 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/80 text-sm">
+                    {tag}
+                  </span>
+                ))}
+              </motion.div>
+
+              <motion.div variants={fadeInUp} className="flex flex-wrap gap-4 pt-4">
+                <a href="#research" className="px-8 py-4 rounded-xl bg-white text-black font-semibold hover:bg-gray-200 transition-colors flex items-center gap-2">
+                  View Research <ChevronDown size={18}/>
+                </a>
+                <a href="#cv" className="px-8 py-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-colors flex items-center gap-2">
+                  <Download size={18}/> CV (PDF)
+                </a>
+                <div className="flex items-center gap-4 ml-4">
+                  <a href="mailto:dongxutang2000@outlook.com" className="p-3 rounded-full bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-all">
+                    <Mail size={22}/>
+                  </a>
+                </div>
+              </motion.div>
+            </div>
+            
+            <motion.div variants={fadeInUp} className="lg:col-span-4 hidden lg:flex justify-center relative">
+              <div className="w-80 h-80 rounded-full border border-white/10 bg-gradient-to-br from-white/5 to-transparent backdrop-blur-3xl p-8 relative flex items-center justify-center">
+                 <div className="absolute inset-0 rounded-full border border-cyan-500/30 animate-[spin_10s_linear_infinite]"></div>
+                 <div className="absolute inset-4 rounded-full border border-purple-500/20 animate-[spin_15s_linear_infinite_reverse]"></div>
+                 <Activity size={64} className="text-cyan-200/50" />
+              </div>
+            </motion.div>
+          </div>
+        </motion.section>
+
+        {/* ABOUT SECTION */}
+        <motion.section id="about" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="scroll-mt-32">
+          <SectionTitle title="Academic Profile" subtitle="Bridging skin mechanosensation, biosignals, and AI." />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <GlassCard className="lg:col-span-2 p-8 md:p-10" hover={false}>
+              <h3 className="text-2xl font-semibold mb-6 flex items-center gap-3">
+                <GraduationCap className="text-cyan-400"/> Education & Focus
+              </h3>
+              <p className="text-white/70 text-lg leading-relaxed mb-8">
+                I am currently pursuing my M.S. in Computer Technology at Harbin Institute of Technology, Shenzhen, advised by Professor Yitian Shao. My core interest lies in translating skin mechanosensation and physiological signals into meaningful interactions through neuromorphic decoding and hardware-algorithm co-design.
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5">
+                  <BookOpen className="text-purple-400 shrink-0 mt-1"/>
+                  <div>
+                    <h4 className="font-medium">M.S. in Computer Technology</h4>
+                    <p className="text-white/50 text-sm">Harbin Institute of Technology, Shenzhen (985) • Sep. 2024 - Present</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5">
+                  <Database className="text-blue-400 shrink-0 mt-1"/>
+                  <div>
+                    <h4 className="font-medium">B.S. in Data Science and Big Data</h4>
+                    <p className="text-white/50 text-sm">Dalian Maritime University (211) • Sep. 2019 - Jun. 2023</p>
+                  </div>
+                </div>
+              </div>
+
+            </GlassCard>
+            
+            <GlassCard className="p-8 md:p-10 flex flex-col group" hover={true}>
+               <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <Code className="text-emerald-400"/> Technical Toolkit
+               </h3>
+               <div className="flex flex-wrap gap-2">
+                 {SKILLS.map(skill => (
+                   <span key={skill} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white/80">
+                     {skill}
+                   </span>
+                 ))}
+               </div>
+               <div className="mt-auto pt-8">
+                 <p className="text-sm text-white/50">Proficient in physiological data acquisition (NOKOV, EMG) and TouchSim modeling.</p>
+               </div>
+            </GlassCard>
+          </div>
+        </motion.section>
+
+        {/* RESEARCH FOCUS (Bento Grid) */}
+        <motion.section id="research" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="scroll-mt-32">
+          <SectionTitle title="Research Focus" subtitle="Key areas of investigation and system development." />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {RESEARCH_FOCUS.map((item) => (
+              <GlassCard key={item.id} span={item.span} className={`p-8 ${item.bg}`}>
+                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-6 shadow-inner">
+                  {item.icon}
+                </div>
+                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                <p className="text-white/60">{item.desc}</p>
+              </GlassCard>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* PUBLICATIONS */}
+        <motion.section id="publications" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="scroll-mt-32">
+          <SectionTitle title="Publications & Conferences" subtitle="Recent academic contributions and presentations." />
+          <div className="space-y-4">
+            {PUBLICATIONS.map((pub) => (
+              <GlassCard key={pub.id} className="p-6 md:p-8 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className={`text-xs font-bold px-2 py-1 rounded-md ${pub.highlight ? 'bg-cyan-500/20 text-cyan-300' : 'bg-white/10 text-white/60'}`}>
+                      {pub.type}
+                    </span>
+                    <span className="text-sm text-white/50">{pub.year}</span>
+                  </div>
+                  <h3 className="text-lg md:text-xl font-semibold leading-snug">{pub.title}</h3>
+                  <p className="text-white/60 text-sm">
+                    {pub.authors} <br/>
+                    <i className="text-white/50">{pub.venue}</i>
+                  </p>
+                </div>
+                <div className="flex gap-3 shrink-0">
+                  <a href={pub.link} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm flex items-center gap-2 transition-colors">
+                    <ExternalLink size={16}/> Details
+                  </a>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* PROJECTS */}
+        <motion.section id="projects" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="scroll-mt-32">
+          <SectionTitle title="Research Projects" subtitle="Translating neuro-mechanosensation theories into functioning systems." />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {PROJECTS.map((project) => (
+              <GlassCard key={project.id} className="flex flex-col group cursor-pointer">
+                <div className="h-48 overflow-hidden relative">
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-colors z-10"></div>
+                  <img src={project.img} alt={project.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
+                </div>
+                <div className="p-6 flex flex-col flex-1">
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-cyan-400 transition-colors">{project.title}</h3>
+                  <p className="text-white/60 text-sm mb-6 flex-1">{project.desc}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {project.tags.map(tag => (
+                      <span key={tag} className="text-xs px-2 py-1 bg-white/5 rounded text-white/50">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* HARDWARE SHOWCASE */}
+        <motion.section id="hardware" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="scroll-mt-32">
+          <div className="flex items-center gap-3 mb-12">
+            <Cpu className="text-emerald-400" size={32}/>
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-emerald-500 tracking-tight">
+                System Integration & Hardware
+              </h2>
+              <p className="text-white/50 text-lg mt-2">Edge sensing systems showcased at SenSys 2024 & CHI 2025.</p>
+            </div>
+          </div>
+          
+          <GlassCard className="p-1 md:p-1 overflow-hidden" hover={false}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+              <div className="h-64 lg:h-auto bg-[url('https://images.unsplash.com/photo-1592659762303-90081d37b9eb?auto=format&fit=crop&w=1000&q=80')] bg-cover bg-center">
+                {/* Image Placeholder area */}
+              </div>
+              <div className="p-8 md:p-12 flex flex-col justify-center bg-white/5">
+                <div className="inline-block px-3 py-1 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-300 mb-4 w-max">SenSys 2024 Demo</div>
+                <h3 className="text-2xl font-bold mb-4">Foot-Wearable Acoustic Sensing</h3>
+                <p className="text-white/70 mb-6">
+                  Developed a complete hardware-software pipeline for VibWalk. Integrated GPS and implemented system-level time synchronization across synchronized accelerometer and microphone sensors to construct geospatial haptic terrain maps.
+                </p>
+                <div className="space-y-3 border-t border-white/10 pt-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/50">Processing Edge</span>
+                    <span className="font-medium text-white/90">Raspberry Pi 5 Real-Time System</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/50">AI Model</span>
+                    <span className="font-medium text-white/90">ResNet Multimodal Recognition</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/50">Performance</span>
+                    <span className="font-medium text-white/90">96.1% Within-user F1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.section>
+
+        {/* HONORS & AWARDS */}
+        <motion.section id="honors" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="scroll-mt-32">
+          <SectionTitle title="Honors & Awards" subtitle="Recognition for academic excellence." />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { year: '2025', title: "First-Class Master's Scholarship", org: 'Harbin Institute of Technology, Shenzhen' },
+              { year: '2024', title: "Second-Class Master's Scholarship", org: 'Harbin Institute of Technology, Shenzhen' },
+              { year: '2023', title: 'Outstanding Graduate', org: 'Liaoning Province' },
+              { year: '2023', title: 'Outstanding Graduation Thesis', org: 'Dalian Maritime University (Top 2.28%)' },
+            ].map((honor, idx) => (
+              <GlassCard key={idx} className="p-6 flex items-center gap-6" hover={true}>
+                <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0 border border-yellow-500/20">
+                  <Award className="text-yellow-500"/>
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold">{honor.title}</h4>
+                  <p className="text-white/50 text-sm">{honor.org} • {honor.year}</p>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* CONTACT / FOOTER */}
+        <motion.section id="contact" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer} className="py-20 border-t border-white/10 text-center">
+          <div className="max-w-2xl mx-auto space-y-8">
+            <h2 className="text-4xl font-bold">Let's Connect</h2>
+            <p className="text-xl text-white/60">
+              Open to academic collaborations and discussions around physiological signals, touch simulation, and HCI.
+            </p>
+            <div className="flex justify-center gap-6 pt-4">
+              <a href="mailto:dongxutang2000@outlook.com" className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors text-white/80 hover:text-white">
+                <Mail size={20}/> dongxutang2000@outlook.com
+              </a>
+            </div>
+            <p className="text-sm text-white/30 pt-20">
+              © {new Date().getFullYear()} Dongxu Tang. Designed with Spatial Computing aesthetics.
+            </p>
+          </div>
+        </motion.section>
+
+      </main>
+    </div>
+  );
+}
