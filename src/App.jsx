@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
-  Mail, MapPin, ChevronLeft, ChevronRight, ArrowUpRight
+  Mail, MapPin, ChevronLeft, ChevronRight, ArrowUpRight, X
 } from 'lucide-react';
 
 // 为了在当前预览环境中正常显示，暂时使用线上链接代替本地 import。
@@ -24,6 +25,7 @@ import CHFC4 from './assets/chfc/4.jpg';
 import CHFC5 from './assets/chfc/5.jpg';
 
 import agentwatchImg from './assets/agentwatch.png';
+import douyinProofImg from './assets/douyin.png';
 
 // --- 自定义 Github 图标 (完美避开 lucide-react 的打包报错) ---
 const GithubIcon = ({ size = 18, className = "" }) => (
@@ -151,13 +153,13 @@ const GALLERY = [
 const FUN_PROJECTS = [
   {
     title: "AgentWatch",
-    description: "Apple Watch / Android notifications for Claude Code and AI agent workflows. Walk away from your Mac while Claude Code works — your wrist vibrates when the agent needs approval, attention, or finishes a task.",
+    description: "Apple Watch & Android notifications for Claude Code and AI agent workflows. Walk away from your Mac while Claude Code works — your wrist vibrates when the agent needs you.",
     image: agentwatchImg,
     platform: "Douyin (TikTok China)",
-    stats: "600K+ views · 16K+ likes · 3.5K+ bookmarks",
+    stats: "600K+ views · 16K+ likes · 3.4K+ bookmarks",
+    douyinProof: douyinProofImg,
     links: {
       GitHub: "https://github.com/dongxutang918-afk/agentwatch",
-      Douyin: "https://v.douyin.com/vuH29jGJPtU/"
     }
   }
 ];
@@ -324,58 +326,106 @@ const useGitHubStats = (owner, repo) => {
   return stats;
 };
 
+// 图片灯箱组件 (Portal 到 body，先 fade out 再卸载避免闪烁)
+const Lightbox = ({ src, alt, onClose }) => {
+  const [closing, setClosing] = useState(false);
+  const onCloseRef = useRef(onClose);
+  const closingRef = useRef(false);
+  onCloseRef.current = onClose;
+
+  const triggerClose = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setClosing(true);
+    // 兜底：300ms 后无论如何执行 onClose（防止 transitionEnd 未触发）
+    setTimeout(() => onCloseRef.current(), 300);
+  }, []);
+
+  useEffect(() => {
+    const handleEsc = (e) => { if (e.key === 'Escape') triggerClose(); };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [triggerClose]);
+
+  // fade-out 动画结束后立即卸载
+  const handleTransitionEnd = useCallback((e) => {
+    if (e.target === e.currentTarget && e.propertyName === 'opacity' && closingRef.current) {
+      onCloseRef.current();
+    }
+  }, []);
+
+  return createPortal(
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 transition-opacity duration-200 ${closing ? 'opacity-0' : 'opacity-100'}`}
+      onClick={triggerClose}
+      onTransitionEnd={handleTransitionEnd}
+    >
+      <button onClick={triggerClose} className="absolute top-6 right-6 text-white/70 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all z-10" aria-label="Close">
+        <X size={24} />
+      </button>
+      <img src={src} alt={alt} className="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain" />
+    </div>,
+    document.body
+  );
+};
+
 // 趣味项目卡片组件 (纵向布局：图片在上，文字在下)
 const FunProjectItem = ({ project }) => {
   const ghStats = useGitHubStats("dongxutang918-afk", "agentwatch");
+  const [showProof, setShowProof] = useState(false);
 
   return (
     <div className="mb-8 p-5 -mx-4 rounded-2xl transition-all duration-300 hover:bg-slate-50 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:border-slate-100 group">
-    {/* 图片区 — 完整展示，无边距裁剪 */}
-    <div className="w-full max-w-2xl mx-auto rounded-xl overflow-hidden bg-slate-50 border border-slate-200 shadow-sm transition-transform duration-500 group-hover:scale-[1.01] mb-5">
-      <img
-        src={project.image}
-        alt={project.title}
-        className="w-full h-auto"
-      />
-    </div>
-    {/* 文字区 */}
-    <div>
-      <div className="font-bold text-gray-900 text-xl leading-snug group-hover:text-blue-600 transition-colors duration-300">
-        {project.title}
+      {/* 图片区 — 完整展示，无边距裁剪 */}
+      <div className="w-full max-w-2xl mx-auto rounded-xl overflow-hidden bg-slate-50 border border-slate-200 shadow-sm transition-transform duration-500 group-hover:scale-[1.01] mb-5">
+        <img
+          src={project.image}
+          alt={project.title}
+          className="w-full h-auto"
+        />
       </div>
-      <div className="text-gray-600 mt-2 leading-relaxed text-[15px]">
-        {project.description}
-      </div>
-      <div className="flex flex-col gap-2 mt-4">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <DouyinIcon size={16} className="text-gray-400 shrink-0" />
-          <span className="text-sm text-gray-500">{project.platform}</span>
-          <span className="text-gray-300">|</span>
-          <span className="text-sm font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">
-            🔥 {project.stats}
-          </span>
+      {/* 文字区 */}
+      <div>
+        <div className="font-bold text-gray-900 text-xl leading-snug group-hover:text-blue-600 transition-colors duration-300">
+          {project.title}
         </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <GithubIcon size={16} className="text-gray-400 shrink-0" />
-          <span className="text-sm text-gray-500">GitHub</span>
-          <span className="text-gray-300">|</span>
-          <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
-            ⭐ {ghStats ? `${ghStats.stars} Stars · ${ghStats.forks} Forks` : '...'}
-          </span>
+        <div className="text-gray-600 mt-2 leading-relaxed text-[15px]">
+          {project.description}
+        </div>
+        <div className="flex flex-col gap-2 mt-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <DouyinIcon size={16} className="text-gray-400 shrink-0" />
+            <span className="text-sm text-gray-500">{project.platform}</span>
+            <span className="text-gray-300">|</span>
+            <span className="text-sm font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">
+              🔥 {project.stats}
+            </span>
+            <button
+              onClick={() => setShowProof(true)}
+              className="inline-flex items-center gap-1 text-slate-500 hover:text-emerald-600 text-xs font-semibold border border-slate-200 hover:border-emerald-200 px-2.5 py-1 rounded-full bg-white hover:bg-emerald-50 transition-all duration-300 shadow-sm uppercase tracking-wide cursor-pointer"
+            >
+              📊 Proof
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <GithubIcon size={16} className="text-gray-400 shrink-0" />
+            <span className="text-sm text-gray-500">GitHub</span>
+            <span className="text-gray-300">|</span>
+            <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+              ⭐ {ghStats ? `${ghStats.stars} Stars · ${ghStats.forks} Forks` : '...'}
+            </span>
+            <a href={project.links.GitHub} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-slate-500 hover:text-blue-600 text-xs font-semibold border border-slate-200 hover:border-blue-200 px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 transition-all duration-300 shadow-sm uppercase tracking-wide">
+              <GithubIcon size={11} />
+              GitHub
+              <ArrowUpRight size={11} className="opacity-50 group-hover/btn:opacity-100" />
+            </a>
+          </div>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2.5 mt-4">
-        {Object.entries(project.links).map(([key, url]) => (
-          <a key={key} href={url} target="_blank" rel="noreferrer" className="group/btn flex items-center gap-1.5 text-slate-600 hover:text-blue-600 text-xs font-semibold border border-slate-200 hover:border-blue-200 px-3 py-1.5 rounded-full bg-white hover:bg-blue-50 transition-all duration-300 shadow-sm uppercase tracking-wide">
-            {key === "GitHub" && <GithubIcon size={12} />}
-            {key === "Douyin" && <DouyinIcon size={12} />}
-            {key}
-            <ArrowUpRight size={12} className="opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-all" />
-          </a>
-        ))}
-      </div>
+      {showProof && (
+        <Lightbox src={project.douyinProof} alt="Douyin data screenshot" onClose={() => setShowProof(false)} />
+      )}
     </div>
-  </div>
   );
 };
 
@@ -515,7 +565,7 @@ export default function App() {
 
           {/* 趣味项目区域 */}
           <section>
-            <SectionTitle>Fun Projects</SectionTitle>
+            <SectionTitle>My Funny Projects</SectionTitle>
             <div>
               {FUN_PROJECTS.map((proj, idx) => (
                 <FunProjectItem key={idx} project={proj} />
