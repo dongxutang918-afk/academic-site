@@ -155,7 +155,7 @@ const FUN_PROJECTS = [
     title: "AgentWatch",
     description: "Apple Watch & Android notifications for Claude Code and AI agent workflows. Walk away from your Mac while Claude Code works — your wrist vibrates when the agent needs you.",
     image: agentwatchImg,
-    platform: "Douyin (TikTok China)",
+    platform: "Chinese short-video platform",
     stats: "600K+ views · 16K+ likes · 3.4K+ bookmarks",
     douyinProof: douyinProofImg,
     links: {
