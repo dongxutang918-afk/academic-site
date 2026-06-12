@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 隐藏横向滚动条但保留滚动功能 */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
