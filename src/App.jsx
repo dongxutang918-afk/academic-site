@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Mail, MapPin, ChevronLeft, ChevronRight, ArrowUpRight
 } from 'lucide-react';
@@ -23,6 +23,8 @@ import CHFC3 from './assets/chfc/3.jpg';
 import CHFC4 from './assets/chfc/4.jpg';
 import CHFC5 from './assets/chfc/5.jpg';
 
+import agentwatchImg from './assets/agentwatch.png';
+
 // --- 自定义 Github 图标 (完美避开 lucide-react 的打包报错) ---
 const GithubIcon = ({ size = 18, className = "" }) => (
   <svg 
@@ -39,6 +41,21 @@ const GithubIcon = ({ size = 18, className = "" }) => (
   >
     <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.02c3.18-.35 6.5-1.5 6.5-7a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 5.5 3.3 6.6 6.5 7a4.8 4.8 0 0 0-1 3.02V22"></path>
     <path d="M9 20c-5 1.5-5-2.5-7-3"></path>
+  </svg>
+);
+
+// --- 自定义 抖音图标 (音符) ---
+const DouyinIcon = ({ size = 18, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="none"
+    className={className}
+  >
+    <path d="M19.5 1.5v13.5a4.5 4.5 0 1 1-3-4.05V6.42A6 6 0 0 0 13.5 8.4V5.1a3.3 3.3 0 0 0 3-3.6h3z" />
   </svg>
 );
 
@@ -128,6 +145,20 @@ const GALLERY = [
       sensys4
     ],
     caption: "Oral & Demo Presentation in SenSys 2024, Hangzhou."
+  }
+];
+
+const FUN_PROJECTS = [
+  {
+    title: "AgentWatch",
+    description: "Apple Watch / Android notifications for Claude Code and AI agent workflows. Walk away from your Mac while Claude Code works — your wrist vibrates when the agent needs approval, attention, or finishes a task.",
+    image: agentwatchImg,
+    platform: "Douyin (TikTok China)",
+    stats: "600K+ views · 16K+ likes · 3.5K+ bookmarks",
+    links: {
+      GitHub: "https://github.com/dongxutang918-afk/agentwatch",
+      Douyin: "https://v.douyin.com/vuH29jGJPtU/"
+    }
   }
 ];
 
@@ -265,6 +296,89 @@ const GalleryItem = ({ item }) => {
   );
 };
 
+// GitHub Stats 自定义 Hook（24小时缓存，避免 API 限额）
+const useGitHubStats = (owner, repo) => {
+  const CACHE_KEY = `gh_${owner}_${repo}`;
+  const STALE_MS = 24 * 60 * 60 * 1000;
+
+  const [stats, setStats] = useState(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+      if (cached && Date.now() - cached.ts < STALE_MS) return cached;
+    } catch {}
+    return null;
+  });
+
+  useEffect(() => {
+    if (stats && Date.now() - stats.ts < STALE_MS) return;
+    fetch(`https://api.github.com/repos/${owner}/${repo}`)
+      .then(r => r.json())
+      .then(d => {
+        const data = { stars: d.stargazers_count, forks: d.forks_count, ts: Date.now() };
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
+        setStats(data);
+      })
+      .catch(() => { /* API 挂了就用旧缓存或 null，不处理 */ });
+  }, []);
+
+  return stats;
+};
+
+// 趣味项目卡片组件 (纵向布局：图片在上，文字在下)
+const FunProjectItem = ({ project }) => {
+  const ghStats = useGitHubStats("dongxutang918-afk", "agentwatch");
+
+  return (
+    <div className="mb-8 p-5 -mx-4 rounded-2xl transition-all duration-300 hover:bg-slate-50 hover:shadow-lg hover:-translate-y-1 border border-transparent hover:border-slate-100 group">
+    {/* 图片区 — 完整展示，无边距裁剪 */}
+    <div className="w-full max-w-2xl mx-auto rounded-xl overflow-hidden bg-slate-50 border border-slate-200 shadow-sm transition-transform duration-500 group-hover:scale-[1.01] mb-5">
+      <img
+        src={project.image}
+        alt={project.title}
+        className="w-full h-auto"
+      />
+    </div>
+    {/* 文字区 */}
+    <div>
+      <div className="font-bold text-gray-900 text-xl leading-snug group-hover:text-blue-600 transition-colors duration-300">
+        {project.title}
+      </div>
+      <div className="text-gray-600 mt-2 leading-relaxed text-[15px]">
+        {project.description}
+      </div>
+      <div className="flex flex-col gap-2 mt-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <DouyinIcon size={16} className="text-gray-400 shrink-0" />
+          <span className="text-sm text-gray-500">{project.platform}</span>
+          <span className="text-gray-300">|</span>
+          <span className="text-sm font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">
+            🔥 {project.stats}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <GithubIcon size={16} className="text-gray-400 shrink-0" />
+          <span className="text-sm text-gray-500">GitHub</span>
+          <span className="text-gray-300">|</span>
+          <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+            ⭐ {ghStats ? `${ghStats.stars} Stars · ${ghStats.forks} Forks` : '...'}
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2.5 mt-4">
+        {Object.entries(project.links).map(([key, url]) => (
+          <a key={key} href={url} target="_blank" rel="noreferrer" className="group/btn flex items-center gap-1.5 text-slate-600 hover:text-blue-600 text-xs font-semibold border border-slate-200 hover:border-blue-200 px-3 py-1.5 rounded-full bg-white hover:bg-blue-50 transition-all duration-300 shadow-sm uppercase tracking-wide">
+            {key === "GitHub" && <GithubIcon size={12} />}
+            {key === "Douyin" && <DouyinIcon size={12} />}
+            {key}
+            <ArrowUpRight size={12} className="opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-all" />
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+  );
+};
+
 export default function App() {
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans selection:bg-blue-100">
@@ -395,6 +509,16 @@ export default function App() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {GALLERY.map((item, idx) => (
                 <GalleryItem key={idx} item={item} />
+              ))}
+            </div>
+          </section>
+
+          {/* 趣味项目区域 */}
+          <section>
+            <SectionTitle>Fun Projects</SectionTitle>
+            <div>
+              {FUN_PROJECTS.map((proj, idx) => (
+                <FunProjectItem key={idx} project={proj} />
               ))}
             </div>
           </section>
