@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  Mail, MapPin, ChevronLeft, ChevronRight, ArrowUpRight, X
+  Mail, MapPin, ChevronLeft, ChevronRight, ArrowUpRight, X, Menu
 } from 'lucide-react';
 
 // 为了在当前预览环境中正常显示，暂时使用线上链接代替本地 import。
@@ -25,7 +25,7 @@ import CHFC4 from './assets/chfc/4.jpg';
 import CHFC5 from './assets/chfc/5.jpg';
 
 import agentwatchImg from './assets/agentwatch.png';
-import douyinProofImg from './assets/douyin.png';
+import douyinProofImg from './assets/proof.jpg';
 
 // --- 自定义 Github 图标 (完美避开 lucide-react 的打包报错) ---
 const GithubIcon = ({ size = 18, className = "" }) => (
@@ -156,7 +156,7 @@ const FUN_PROJECTS = [
     description: "Apple Watch & Android notifications for Claude Code and AI agent workflows. Walk away from your Mac while Claude Code works — your wrist vibrates when the agent needs you.",
     image: agentwatchImg,
     platform: "Chinese short-video platform",
-    stats: "600K+ views · 16K+ likes · 3.4K+ bookmarks",
+    stats: "673K+ views · 21K+ likes · 3.8K+ bookmarks",
     douyinProof: douyinProofImg,
     links: {
       GitHub: "https://github.com/dongxutang918-afk/agentwatch",
@@ -429,9 +429,73 @@ const FunProjectItem = ({ project }) => {
   );
 };
 
+// --- 导航栏组件 ---
+const Navbar = () => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const scrollTo = (id) => {
+    setMenuOpen(false);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const navItems = [
+    { label: 'News', id: 'news' },
+    { label: 'Publications', id: 'publications' },
+    { label: 'Education', id: 'education' },
+    { label: 'Gallery', id: 'gallery' },
+    { label: 'Funny Projects', id: 'projects' },
+  ];
+
+  return (
+    <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <button onClick={() => scrollTo('news')} className="text-sm font-bold text-gray-800 hover:text-blue-600 transition-colors tracking-tight">
+          Dongxu Tang
+        </button>
+        {/* Desktop links */}
+        <div className="hidden sm:flex items-center gap-1">
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => scrollTo(item.id)}
+              className="text-xs text-gray-500 hover:text-blue-600 px-2.5 py-1.5 rounded-md hover:bg-slate-50 transition-all font-medium"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="sm:hidden text-gray-500 hover:text-gray-800 transition-colors p-1"
+          aria-label="Toggle menu"
+        >
+          <Menu size={20} />
+        </button>
+      </div>
+      {/* Mobile dropdown */}
+      {menuOpen && (
+        <div className="sm:hidden border-t border-gray-100 bg-white/90 backdrop-blur-md px-6 pb-3 pt-1">
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => scrollTo(item.id)}
+              className="block w-full text-left text-sm text-gray-600 hover:text-blue-600 py-2 transition-colors font-medium"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </nav>
+  );
+};
+
 export default function App() {
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans selection:bg-blue-100">
+      <Navbar />
       {/* 调整了容器的间距和响应式比例 */}
       <div className="max-w-6xl mx-auto px-6 py-12 md:py-20 flex flex-col md:flex-row gap-10 md:gap-12 lg:gap-16">
         
@@ -499,7 +563,7 @@ export default function App() {
           </section>
 
           {/* News Section */}
-          <section>
+          <section id="news" className="scroll-mt-16">
             <SectionTitle>News</SectionTitle>
             <ul className="space-y-4">
               {NEWS.map((item, idx) => (
@@ -512,7 +576,7 @@ export default function App() {
           </section>
 
           {/* Publications Section */}
-          <section id="publications">
+          <section id="publications" className="scroll-mt-16">
             <SectionTitle>Publications</SectionTitle>
             <div>
               {PUBLICATIONS.map((pub, idx) => (
@@ -522,7 +586,7 @@ export default function App() {
           </section>
 
           {/* Education Section */}
-          <section>
+          <section id="education" className="scroll-mt-16">
             <SectionTitle>Education</SectionTitle>
             <div className="space-y-6">
               <div className="flex justify-between items-start">
@@ -554,7 +618,7 @@ export default function App() {
           </section>
 
           {/* 参会照片与活动画廊区域 */}
-          <section>
+          <section id="gallery" className="scroll-mt-16">
             <SectionTitle>Activities & Gallery</SectionTitle>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {GALLERY.map((item, idx) => (
@@ -564,7 +628,7 @@ export default function App() {
           </section>
 
           {/* 趣味项目区域 */}
-          <section>
+          <section id="projects" className="scroll-mt-16">
             <SectionTitle>My Funny Projects</SectionTitle>
             <div>
               {FUN_PROJECTS.map((proj, idx) => (
