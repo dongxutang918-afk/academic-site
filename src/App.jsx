@@ -10,8 +10,8 @@ import avatarImg from './assets/avatar.jpg';
 import pub1Img from './assets/chi25.jpg';
 import pub2Img from './assets/sensys24.jpg';
 
-import chi1 from './assets/chi/1.jpg';
-import chi2 from './assets/chi/2.jpg';
+import chi2 from './assets/chi/1.jpg';
+import chi1 from './assets/chi/2.jpg';
 import chi3 from './assets/chi/3.jpg';
 import sensys1 from './assets/sensys/1.jpg';
 import sensys2 from './assets/sensys/2.jpg';
